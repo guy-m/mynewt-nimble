@@ -456,12 +456,34 @@ ble_hs_conn_addrs(const struct ble_hs_conn *conn,
 
     case BLE_ADDR_PUBLIC_ID:
         addrs->peer_id_addr.type = BLE_ADDR_PUBLIC;
-        addrs->peer_ota_addr = conn->bhc_peer_rpa_addr;
+        /* The controller may report an identity address type here
+         * even though the peer connected using its bare identity address
+         * rather than an RPA (for example under Device Privacy Mode),
+         * in which case bhc_peer_rpa_addr is legitimately all-zero.
+         * Feeding that all-zero address breaks the DHKey Check so fall back
+         * to the identity address instead of assuming an RPA is always present.
+         */
+        if (memcmp(conn->bhc_peer_rpa_addr.val, ble_hs_conn_null_addr, 6) == 0) {
+            addrs->peer_ota_addr = addrs->peer_id_addr;
+        } else {
+            addrs->peer_ota_addr = conn->bhc_peer_rpa_addr;
+        }
         break;
 
     case BLE_ADDR_RANDOM_ID:
         addrs->peer_id_addr.type = BLE_ADDR_RANDOM;
-        addrs->peer_ota_addr = conn->bhc_peer_rpa_addr;
+        /* The controller may report an identity address type here
+         * even though the peer connected using its bare identity address
+         * rather than an RPA (for example under Device Privacy Mode),
+         * in which case bhc_peer_rpa_addr is legitimately all-zero.
+         * Feeding that all-zero address breaks the DHKey Check so fall back
+         * to the identity address instead of assuming an RPA is always present.
+         */
+        if (memcmp(conn->bhc_peer_rpa_addr.val, ble_hs_conn_null_addr, 6) == 0) {
+            addrs->peer_ota_addr = addrs->peer_id_addr;
+        } else {
+            addrs->peer_ota_addr = conn->bhc_peer_rpa_addr;
+        }
         break;
 
     default:
